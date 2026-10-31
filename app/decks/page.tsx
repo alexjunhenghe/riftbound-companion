@@ -54,9 +54,12 @@ export default function DecksPage() {
       ) : (
         <ul className="mt-6 space-y-3">
           {store.decks.map((deck) => {
-            const mainCount = deck.cards
-              .filter((c) => c.zone === "main")
-              .reduce((s, c) => s + c.qty, 0);
+            // Main deck size includes the Chosen Champion (TR 402.1).
+            const mainCount =
+              deck.cards
+                .filter((c) => c.zone === "main")
+                .reduce((s, c) => s + c.qty, 0) +
+              (deck.championId ? 1 : 0);
             const price = priceTotal(
               deck.cards.map((c) => ({
                 cardId: c.cardId,

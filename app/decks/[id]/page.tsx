@@ -58,15 +58,22 @@ export default function DeckBuilderPage() {
   const deck: Deck = foundDeck;
 
   const entries: DeckCardEntry[] = deck.cards;
-  const violations = validateDeck(entries);
+  const violations = validateDeck(entries, {
+    legendId: deck.legendId,
+    championId: deck.championId,
+    format: deck.format,
+  });
   const hard = violations.filter((v) => !v.unverifiedRule);
   const notes = violations.filter((v) => v.unverifiedRule);
   const price = priceTotal(
     entries.map((c) => ({ cardId: c.cardId, qty: c.qty, foil: false })),
   );
-  const mainCount = entries
-    .filter((c) => c.zone === "main")
-    .reduce((s, c) => s + c.qty, 0);
+  // Main deck size includes the Chosen Champion (TR 402.1); the
+  // Legend is never counted.
+  const mainCount =
+    entries
+      .filter((c) => c.zone === "main")
+      .reduce((s, c) => s + c.qty, 0) + (deck.championId ? 1 : 0);
   const curve = energyCurve(entries);
   const domains = domainBreakdown(entries);
   const maxCurve = Math.max(1, ...curve.map((b) => b.count));
@@ -193,7 +200,7 @@ export default function DeckBuilderPage() {
 
       <div className="mt-4 flex flex-wrap gap-6 font-mono text-sm">
         <span>
-          Main deck: <strong>{mainCount}</strong>
+          Main deck (incl. champion): <strong>{mainCount}</strong> / 40
         </span>
         <span>
           Deck price: <strong>{formatPrice(price.total)}</strong>
