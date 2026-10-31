@@ -7,7 +7,13 @@
  *     -> { fetched, source, sets[], cards[] } with 1725 printings
  *   price export:   https://api.rifthunt.com/bulk/prices
  *     -> { fetched, currency, prices[] } with 1688 rows, each
- *        { riftboundId, finishes: { normal: {market}, foil: {market} } }
+ *        { riftboundId, tcgId, finishes: { normal: {market}, foil: {market} } }
+ *   JOIN KEY WARNING (verified 2026-10-31): do NOT join prices on
+ *   riftboundId alone — 22 riftboundIds carry two price rows (e.g.
+ *   base vs Metal promos: Annie Dark Child foil $34.94 vs $2,210.34).
+ *   tcgId is unique on both sides (1688 distinct each) and matches
+ *   1688 catalogue cards vs 1349 for riftboundId, so the join prefers
+ *   tcgId and falls back to riftboundId only for rows/cards without one.
  * Env overrides (defaults are the verified endpoints above):
  *   RIFTHUNT_BULK_URL, RIFTHUNT_PRICE_URL
  *
@@ -125,7 +131,8 @@ if (!Array.isArray(records) || records.length === 0) {
 }
 const bulkFetched = firstString(bulk.fetched) ?? null;
 
-let priceMap = {};
+let priceByTcg = {};
+let priceByRb = {};
 let priceFetched = null;
 if (PRICE_URL) {
   try {
@@ -135,8 +142,12 @@ if (PRICE_URL) {
       ? priceData
       : (priceData.prices ?? priceData.data ?? []);
     for (const row of rows) {
-      const key = firstString(row.riftboundId, row.id, row.printingId, row.cardId);
-      if (key) priceMap[key] = row;
+      const tcgKey = firstString(row.tcgId, row.tcg_id);
+      if (tcgKey) priceByTcg[tcgKey] = row;
+      const rbKey = firstString(row.riftboundId, row.id, row.printingId, row.cardId);
+      // First row wins for the fallback map; the tcgId map above is
+      // the authoritative join, so shared riftboundIds can't misprice.
+      if (rbKey && !priceByRb[rbKey]) priceByRb[rbKey] = row;
     }
   } catch (err) {
     console.warn(`Price export failed (${err.message}); continuing without prices.`);
@@ -145,7 +156,11 @@ if (PRICE_URL) {
 
 const cards = records.map((raw) => {
   const card = normalize(raw);
-  const priceRow = priceMap[raw.id] ?? priceMap[raw.riftboundId] ?? priceMap[card.id];
+  const priceRow =
+    priceByTcg[firstString(raw.tcgId, raw.tcg_id)] ??
+    priceByRb[raw.id] ??
+    priceByRb[raw.riftboundId] ??
+    priceByRb[card.id];
   if (priceRow) {
     const finishes = priceRow.finishes ?? {};
     const p = priceRow.prices ?? priceRow;

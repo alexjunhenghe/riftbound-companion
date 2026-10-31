@@ -57,6 +57,21 @@ async function waitForServer(proc, timeoutMs = 60000) {
   return false;
 }
 
+// Fail fast if the port is already held: an orphaned `next start` from
+// an earlier run would otherwise serve stale/mixed chunks and produce
+// confusing hydration failures instead of testing this build.
+try {
+  const probe = await fetch(`${BASE}/`, { signal: AbortSignal.timeout(2000) });
+  if (probe.ok) {
+    console.error(
+      `Port ${PORT} is already serving something — kill the stale server first (e.g. fuser -k ${PORT}/tcp), then re-run smoke.`,
+    );
+    process.exit(1);
+  }
+} catch {
+  // Nothing listening: good, we can start our own server.
+}
+
 const server = spawn("npx", ["next", "start", "-p", PORT], {
   cwd: new URL("..", import.meta.url).pathname,
   stdio: "pipe",

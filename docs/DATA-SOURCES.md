@@ -10,12 +10,29 @@
     (OGN 352, SFD 306, UNL 306, RAD 250, VEN 243, OPP 221, OGS 24,
     PR 12, JDG 4, RWB 4, SGN 3). Bulk snapshot dated 2026-10-29.
   - Price export: `https://api.rifthunt.com/bulk/prices` →
-    `{ fetched, currency: "USD", prices[] }`, 1,688 rows keyed by
-    riftboundId with `finishes.normal.market` / `finishes.foil.market`
+    `{ fetched, currency: "USD", prices[] }`, 1,688 rows with
+    `finishes.normal.market` / `finishes.foil.market`
     (TCGplayer market prices, refreshed daily). Imported 2026-10-31:
-    **661 printings with a normal market price, 1,623 with a foil
-    market price** — many printings (alt arts, promos) only carry a
-    foil price; the rest show as Unpriced.
+    **661 printings with a normal market price, 1,618 with a foil
+    market price, 1,666 with either** — many printings (alt arts,
+    promos) only carry a foil price; the rest show as Unpriced.
+  - **Price join key: `tcgId`, not `riftboundId`.** Verified
+    2026-10-31: 22 riftboundIds carry two price rows (base vs Metal
+    promos — e.g. Annie, Dark Child foil $34.94 vs $2,210.34), and
+    294 promo printings in the bulk file itself carry `tcg:<id>` as
+    their `id` because their riftboundId is shared. `tcgId` is unique
+    on both sides (1,688 distinct each) and matches 1,688 catalogue
+    cards, vs 1,349 for riftboundId. The importer joins on `tcgId`
+    first and falls back to `riftboundId` only for rows/cards without
+    one; a `riftboundId`-only join would misprice the shared-id pairs.
+  - **Fair use (from the RiftHunt docs):** no key, no quota, no hard
+    rate limit — stated as a request, not a promise. Keep bursts
+    under ~10 requests/second, send an identifying User-Agent (the
+    importer does), fetch `/bulk/cards` at most once a day and prices
+    daily. Terms: "Free for any use, commercial included," under
+    Riot's fan-content policy; card names, text, and images are
+    Riot's. Price-row `purchaseUri` links are affiliate links; the
+    app does not currently surface them.
   - Card records carry `id` (riftboundId, e.g. `ogn-007a-298`),
     `num`, `energy`, `might`, `power`, `type`, `supertype`,
     `rarity`, `domains`, `text`, `flavour`, `set`, `setName`,
