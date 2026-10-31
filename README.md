@@ -12,9 +12,32 @@ or any existing companion site.
 
 ## Status
 
-Design phase complete. See [DESIGN.md](DESIGN.md) for the full design
-document: route map, design system, interactions, data model, stack,
-clean-room data sources, and phased build plan.
+Phases 0–3 and 5 are built and verified (see below). Accounts + cloud
+sync (Phase 4) is intentionally not built: it needs the user to create a
+Supabase or Clerk project and provide its credentials, and this build
+does not fake auth. The app is fully usable without an account — all
+data lives in the browser's local storage. The Drizzle schema in
+`db/schema.ts` is the typed target for the future sync phase.
+
+See [DESIGN.md](DESIGN.md) for the full design document: route map,
+design system, interactions, data model, stack, clean-room data sources,
+and phased build plan.
+
+## Running it
+
+```bash
+npm install
+npm run sync-catalog   # imports the RiftHunt public bulk catalogue
+npm run build
+npm start
+```
+
+Tests and smoke checks:
+
+```bash
+npm test    # Vitest unit tests (legality, pricing, deck codec, win rate)
+npm run smoke  # Playwright checks against the production build
+```
 
 ## Planned stack
 

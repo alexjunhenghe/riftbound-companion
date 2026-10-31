@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Domain accents — original choices for this rebuild, not sampled from
+   any existing site. Each domain gets one saturated accent used for
+   chips, badges, and deck-breakdown bars. */
+.domain-fury { --domain-color: #dc2626; }
+.domain-calm { --domain-color: #2563eb; }
+.domain-mind { --domain-color: #7c3aed; }
+.domain-body { --domain-color: #059669; }
+.domain-chaos { --domain-color: #d97706; }
+.domain-order { --domain-color: #0891b2; }
+
+.domain-chip {
+  border: 1px solid var(--domain-color);
+  color: var(--domain-color);
+}
